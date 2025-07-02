@@ -11,6 +11,7 @@ from const import BOOK_MAPPING
 from bible_api import BibleAPI
 from users import get_all_user_ids, add_user_id
 from config import get_app_settings
+from zoneinfo import ZoneInfo
 
 settings = get_app_settings()
 
@@ -33,7 +34,7 @@ async def cmd_start(message: Message):
 
 @dp.message(Command('today'))
 async def cmd_today(message: Message):
-    today = datetime.now()
+    today = datetime.now(ZoneInfo('Europe/Moscow'))
     with Session() as session:
         plan = session.query(ReadingPlan).filter_by(month=today.month, day=today.day).first()
         if not plan:
@@ -49,7 +50,7 @@ async def cmd_today(message: Message):
                 await message.answer(text, parse_mode='HTML')
 
 async def daily_broadcast():
-    today = datetime.now()
+    today = datetime.now(ZoneInfo('Europe/Moscow'))
     with Session() as session:
         plan = session.query(ReadingPlan).filter_by(month=today.month, day=today.day).first()
         if not plan:
@@ -111,7 +112,7 @@ async def format_plan_text(plan, bible_api):
 
 async def scheduler():
     while True:
-        now = datetime.now()
+        now = datetime.now(ZoneInfo('Europe/Moscow'))
         # 7:00 утра
         if now.hour == 7 and now.minute == 0:
             await daily_broadcast()
