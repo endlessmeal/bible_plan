@@ -1,0 +1,15 @@
+[project]
+name = "bible_plan"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "nazar", email = "baloyan99@list.ru"},
+]
+dependencies = ["aiogram>=3.20.0.post0", "sqlalchemy>=2.0.41", "httpx>=0.28.1", "schedule>=1.2.2", "pydantic-settings>=2.10.1"]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
