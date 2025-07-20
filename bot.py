@@ -1,17 +1,18 @@
 import asyncio
-from aiogram import Bot, Dispatcher, types
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import ReadingPlan, Base
-import os
-from datetime import datetime
-from const import BOOK_MAPPING
+
 from bible_api import BibleAPI
-from users import get_all_user_ids, add_user_id
 from config import get_app_settings
-from zoneinfo import ZoneInfo
+from const import BOOK_MAPPING
+from models import ReadingPlan
+from users import add_user_id, get_all_user_ids
 
 settings = get_app_settings()
 
@@ -29,11 +30,12 @@ Session = sessionmaker(bind=engine)
 @dp.message(Command('start'))
 async def cmd_start(message: Message):
     add_user_id(message.from_user.id)
-    await message.answer('Привет! Я бот для ежедневного чтения Библии. Я буду присылать тебе главы на каждый день в 7:00 утра.\n\nИспользуй команду /today чтобы получить главы на сегодня.')
+    await message.answer('Привет! Я бот для ежедневного чтения Библии.\n\nИспользуй команду /today чтобы получить главы на сегодня.')
 
 
 @dp.message(Command('today'))
-async def cmd_today(message: Message):
+async def cmd_today(message: Message) -> None:
+    """Хендлер для команды today"""
     today = datetime.now(ZoneInfo('Europe/Moscow'))
     with Session() as session:
         plan = session.query(ReadingPlan).filter_by(month=today.month, day=today.day).first()
@@ -49,7 +51,7 @@ async def cmd_today(message: Message):
             else:
                 await message.answer(text, parse_mode='HTML')
 
-async def daily_broadcast():
+async def daily_broadcast() -> None:
     today = datetime.now(ZoneInfo('Europe/Moscow'))
     with Session() as session:
         plan = session.query(ReadingPlan).filter_by(month=today.month, day=today.day).first()
@@ -66,7 +68,7 @@ async def daily_broadcast():
                 else:
                     await bot.send_message(user_id, text, parse_mode='HTML')
 
-async def format_plan_text(plan, bible_api):
+async def format_plan_text(plan, bible_api) -> list:
     result_texts = []
     async def fetch_and_format(ref: str):
         try:
@@ -110,7 +112,7 @@ async def format_plan_text(plan, bible_api):
     await fetch_and_format(plan.old_testament)
     return result_texts
 
-async def scheduler():
+async def scheduler() -> None:
     while True:
         now = datetime.now(ZoneInfo('Europe/Moscow'))
         # 7:00 утра
@@ -125,4 +127,4 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
-    asyncio.run(main()) 
+    asyncio.run(main())
